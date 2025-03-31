@@ -4,3 +4,4 @@ venv/
 .env
 personal_memory.json
 
+.streamlit/secrets.toml

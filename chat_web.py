@@ -1,31 +1,55 @@
 import streamlit as st
 import json
-from langchain.chains import ConversationChain
-from langchain.memory import ConversationBufferMemory
-from langchain.llms import OpenAI
-import streamlit as st
+import openai
 
-llm = OpenAI(
-    openai_api_key=st.secrets["OPENAI_API_KEY"],
-    model_name="gpt-4",  # You can also use "gpt-3.5-turbo"
-    temperature=0.7
-)
+# Load OpenAI API key from secrets
+openai.api_key = st.secrets["openai"]["api_key"]
 
 # Load memory
+
 def load_memory():
     try:
         with open("personal_memory.json", "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        return {"name": "", "goals": []}
+        return {
+            "name": "",
+            "goals": [],
+            "favorites": {},
+            "frequent_reminder": ""
+        }
 
 def save_memory(memory):
     with open("personal_memory.json", "w") as f:
         json.dump(memory, f, indent=2)
 
-# UI
-st.set_page_config(page_title="Personal AI Chatbot", layout="centered")
-st.title("🧠 Your Personal AI")
+# Function to query OpenAI
+
+def ask_openai(prompt, memory_context=""):
+    full_prompt = f"""
+You are Mikey, the digital version of Michael Christopher Maron.
+You speak like Mikey: honest, reflective, curious, funny, and confident.
+You care deeply about self-improvement, fitness, learning AI, and staying disciplined.
+Here is what you know about Mikey:
+{memory_context}
+
+Now respond to the following message:
+{prompt}
+"""
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # or "gpt-4" if you have access
+        messages=[
+            {"role": "system", "content": "You are Mikey, a helpful AI version of Michael Christopher Maron."},
+            {"role": "user", "content": full_prompt}
+        ],
+        temperature=0.7
+    )
+    return response.choices[0].message.content.strip()
+
+# Streamlit App UI
+
+st.set_page_config(page_title="Mikey AI", layout="centered")
+st.title("🧠 Talk to Mikey — Your Personal AI")
 
 memory_store = load_memory()
 if not memory_store["name"]:
@@ -36,33 +60,20 @@ else:
 
 chat_history = st.session_state.get("chat_history", [])
 
-llm = Ollama(model="mistral")
-buffer_memory = ConversationBufferMemory()
-conversation = ConversationChain(llm=llm, memory=buffer_memory)
-
-user_input = st.chat_input("Talk to your AI...")
+user_input = st.chat_input("Talk to Mikey...")
 
 if user_input:
-    if "my goal is" in user_input.lower():
-        goal = user_input.split("is", 1)[1].strip()
-        memory_store["goals"].append(goal)
-        save_memory(memory_store)
-        ai_reply = "🧠 Got it! I’ll remember that goal."
-    else:
-        persona = f"""
-        You are Mikey - an AI version of Michael Maron 
-        You speak like Mikey: honest, reflective, curious, funny, and confident. 
-        You care deeply about self-improvement, fitness, learning AI, and staying disciplined.
-        You know Mikey's life details: {json.dumps(memory_store, indent=2)}
-        If you're talking to someone else, respond as if you are Mikey.
-        If you're talking to Mikey himself, reflect his thoughts, encourage his goals, and hold him accountable.
-        """
-        ai_reply = conversation.run(f"{persona} \n {user_input}")
+    memory_context = json.dumps(memory_store, indent=2)
+    ai_reply = ask_openai(user_input, memory_context=memory_context)
+
+    st.chat_message("user").write(user_input)
+    st.chat_message("assistant").write(ai_reply)
 
     chat_history.append(("You", user_input))
     chat_history.append(("AI", ai_reply))
     st.session_state.chat_history = chat_history
 
-# Display chat
+# Display chat history
 for speaker, text in chat_history:
     st.chat_message("user" if speaker == "You" else "assistant").write(text)
+
