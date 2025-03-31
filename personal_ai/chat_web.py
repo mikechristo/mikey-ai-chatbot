@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-from langchain.llms import Ollama
+from langchain_community.llms import Ollama
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
 
