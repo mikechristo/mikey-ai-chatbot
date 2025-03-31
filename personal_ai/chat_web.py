@@ -1,9 +1,8 @@
 import streamlit as st
 import json
-import openai
+from openai import OpenAI
 
-# Load OpenAI API key from secrets
-openai.api_key = st.secrets["openai"]["api_key"]
+client = OpenAI(api_key=st.secrets["openai"]["api_key"])
 
 # Load memory
 
@@ -29,15 +28,14 @@ def ask_openai(prompt, memory_context=""):
     full_prompt = f"""
 You are Mikey, the digital version of Michael Christopher Maron.
 You speak like Mikey: honest, reflective, curious, funny, and confident.
-You care deeply about self-improvement, fitness, learning AI, and staying disciplined.
 Here is what you know about Mikey:
 {memory_context}
 
 Now respond to the following message:
 {prompt}
 """
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # or "gpt-4" if you have access
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",  # or "gpt-4" if available
         messages=[
             {"role": "system", "content": "You are Mikey, a helpful AI version of Michael Christopher Maron."},
             {"role": "user", "content": full_prompt}
@@ -45,6 +43,7 @@ Now respond to the following message:
         temperature=0.7
     )
     return response.choices[0].message.content.strip()
+
 
 # Streamlit App UI
 
