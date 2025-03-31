@@ -9,7 +9,7 @@ openai.api_key = st.secrets["openai"]["api_key"]
 
 def load_memory():
     try:
-        with open("personal_memory.json", "r") as f:
+        with open("../personal_memory.json", "r") as f:
             return json.load(f)
     except FileNotFoundError:
         return {
@@ -20,7 +20,7 @@ def load_memory():
         }
 
 def save_memory(memory):
-    with open("personal_memory.json", "w") as f:
+    with open("../personal_memory.json", "w") as f:
         json.dump(memory, f, indent=2)
 
 # Function to query OpenAI
