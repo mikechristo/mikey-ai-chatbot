@@ -1,8 +1,15 @@
 import streamlit as st
 import json
-from langchain_community.llms import Ollama
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
+from langchain.llms import OpenAI
+import streamlit as st
+
+llm = OpenAI(
+    openai_api_key=st.secrets["OPENAI_API_KEY"],
+    model_name="gpt-4",  # You can also use "gpt-3.5-turbo"
+    temperature=0.7
+)
 
 # Load memory
 def load_memory():
