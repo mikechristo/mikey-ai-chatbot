@@ -1,6 +1,24 @@
 import streamlit as st
 import json
 from openai import OpenAI
+import time
+import openai
+
+def ask_openai(prompt, memory_context=None, retries=3, delay=5):
+    for attempt in range(retries):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return response.choices[0].message.content
+        except openai.RateLimitError as e:
+            if attempt < retries - 1:
+                time.sleep(delay)
+                continue
+            else:
+                raise e
+
 
 client = OpenAI(api_key=st.secrets["openai"]["api_key"])
 
